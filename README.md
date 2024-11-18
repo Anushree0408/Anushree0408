@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @Anushree0
+- 👋 Hi, I’m @Anushree
 - 👀 I’m interested in Microbiome Data Analysis
 - 🌱 I’m currently learning NGS, SHOTGUN, AMPLICON SEQUENCING, METAPROTEOMICS
 - 💞️ I’m looking to collaborate on MICROBIOME DATA
