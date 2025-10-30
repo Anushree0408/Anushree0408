@@ -156,47 +156,44 @@ run_bin <- function(bin_name){
               length(cond), sum(cond=="CONTROL"), sum(cond=="IBD")))
 
   # Run ALDEx2
+  # Step 1: Generate CLR values
   clr <- ALDEx2::aldex.clr(X, cond, mc.samples = mc_samples, denom = denom, verbose = FALSE)
+  
+  # Step 2: Calculate effect sizes (this gives us diff.btw, diff.win, effect, overlap)
+  eff <- ALDEx2::aldex.effect(clr, CI = TRUE, verbose = FALSE)
+  
+  # Step 3: Calculate t-test statistics (this gives us we.ep, we.eBH, wi.ep, wi.eBH)
   tt  <- ALDEx2::aldex.ttest(clr, paired = FALSE, verbose = FALSE)
 
-  res <- as.data.frame(tt)
-  res$path_id <- rownames(res)
+  # Merge effect sizes and t-test results
+  res <- merge(as.data.frame(eff), as.data.frame(tt), by = "row.names", all = TRUE)
+  res$path_id <- res$Row.names
+  res$Row.names <- NULL
   rownames(res) <- NULL
 
   # Debug: Print column names to see what ALDEx2 actually returns
   cat(sprintf("  [DEBUG] ALDEx2 output columns: %s\n", paste(names(res), collapse=", ")))
 
   # FIXED: Check which effect size column exists and use it
-  # ALDEx2 may return 'diff.btw' or 'effect' depending on version
+  # ALDEx2 typically returns 'effect' from aldex.effect()
   effect_col <- NULL
   if ("effect" %in% names(res)) {
     effect_col <- "effect"
   } else if ("diff.btw" %in% names(res)) {
     effect_col <- "diff.btw"
   } else {
-    cat("  [WARN] No effect size column found. Available columns:", paste(names(res), collapse=", "), "\n")
-    # Use the first numeric column as fallback
-    numeric_cols <- names(res)[sapply(res, is.numeric)]
-    if (length(numeric_cols) > 0) {
-      effect_col <- numeric_cols[1]
-      cat(sprintf("  [INFO] Using '%s' as effect size column\n", effect_col))
-    }
+    stop(sprintf("Neither 'diff.btw' nor 'effect' found in ALDEx2 output. Columns are: %s", 
+                 paste(names(res), collapse=", ")))
   }
 
   # Attach pathway names + direction
-  if (!is.null(effect_col)) {
-    res <- res %>%
-      dplyr::left_join(map_lookup, by = "path_id") %>%
-      dplyr::mutate(higher_in = ifelse(.data[[effect_col]] > 0, "IBD", "CONTROL"))
-    
-    # Sort by significance and effect size
-    if ("we.eBH" %in% names(res)) {
-      res <- dplyr::arrange(res, we.eBH, dplyr::desc(abs(.data[[effect_col]])))
-    }
-  } else {
-    # No effect column found, just add pathway names
-    res <- res %>%
-      dplyr::left_join(map_lookup, by = "path_id")
+  res <- res %>%
+    dplyr::left_join(map_lookup, by = "path_id") %>%
+    dplyr::mutate(higher_in = ifelse(.data[[effect_col]] > 0, "IBD", "CONTROL"))
+  
+  # Sort by significance and effect size
+  if ("we.eBH" %in% names(res)) {
+    res <- dplyr::arrange(res, we.eBH, dplyr::desc(abs(.data[[effect_col]])))
   }
 
   tag <- gsub("-", "", bin_name)
