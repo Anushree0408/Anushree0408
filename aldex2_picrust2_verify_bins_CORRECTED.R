@@ -151,6 +151,10 @@ run_bin <- function(bin_name){
   cond <- factor(cond, levels = c("CONTROL", "IBD"))
   cond <- as.character(cond)
 
+  # Debug: Print first few samples and their conditions
+  cat(sprintf("  [DEBUG] Samples: %d | Conditions: CONTROL=%d, IBD=%d\n", 
+              length(cond), sum(cond=="CONTROL"), sum(cond=="IBD")))
+
   # Run ALDEx2
   clr <- ALDEx2::aldex.clr(X, cond, mc.samples = mc_samples, denom = denom, verbose = FALSE)
   tt  <- ALDEx2::aldex.ttest(clr, paired = FALSE, verbose = FALSE)
@@ -159,14 +163,40 @@ run_bin <- function(bin_name){
   res$path_id <- rownames(res)
   rownames(res) <- NULL
 
-  # Attach pathway names + direction
-  # FIXED: Use diff.btw instead of effect (ALDEx2 column name)
-  res <- res %>%
-    dplyr::left_join(map_lookup, by = "path_id") %>%
-    dplyr::mutate(higher_in = ifelse(diff.btw > 0, "IBD", "CONTROL"))
+  # Debug: Print column names to see what ALDEx2 actually returns
+  cat(sprintf("  [DEBUG] ALDEx2 output columns: %s\n", paste(names(res), collapse=", ")))
 
-  if ("we.eBH" %in% names(res)) {
-    res <- dplyr::arrange(res, we.eBH, dplyr::desc(abs(diff.btw)))
+  # FIXED: Check which effect size column exists and use it
+  # ALDEx2 may return 'diff.btw' or 'effect' depending on version
+  effect_col <- NULL
+  if ("effect" %in% names(res)) {
+    effect_col <- "effect"
+  } else if ("diff.btw" %in% names(res)) {
+    effect_col <- "diff.btw"
+  } else {
+    cat("  [WARN] No effect size column found. Available columns:", paste(names(res), collapse=", "), "\n")
+    # Use the first numeric column as fallback
+    numeric_cols <- names(res)[sapply(res, is.numeric)]
+    if (length(numeric_cols) > 0) {
+      effect_col <- numeric_cols[1]
+      cat(sprintf("  [INFO] Using '%s' as effect size column\n", effect_col))
+    }
+  }
+
+  # Attach pathway names + direction
+  if (!is.null(effect_col)) {
+    res <- res %>%
+      dplyr::left_join(map_lookup, by = "path_id") %>%
+      dplyr::mutate(higher_in = ifelse(.data[[effect_col]] > 0, "IBD", "CONTROL"))
+    
+    # Sort by significance and effect size
+    if ("we.eBH" %in% names(res)) {
+      res <- dplyr::arrange(res, we.eBH, dplyr::desc(abs(.data[[effect_col]])))
+    }
+  } else {
+    # No effect column found, just add pathway names
+    res <- res %>%
+      dplyr::left_join(map_lookup, by = "path_id")
   }
 
   tag <- gsub("-", "", bin_name)
@@ -178,7 +208,7 @@ run_bin <- function(bin_name){
     sig <- res[res$we.eBH < 0.05, ]
     sig_csv <- file.path(out_dir, sprintf("aldex2_%s_significant_weBH_lt_0.05.csv", tag))
     data.table::fwrite(sig, sig_csv)
-    cat("  [OK] Wrote:", sig_csv, "\n\n")
+    cat(sprintf("  [OK] Wrote: %s (n=%d significant pathways)\n\n", sig_csv, nrow(sig)))
   } else {
     cat("  [WARN] No we.eBH column found.\n\n")
   }
