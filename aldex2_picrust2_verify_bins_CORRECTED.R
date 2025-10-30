@@ -136,6 +136,12 @@ run_bin <- function(bin_name){
   # Reorder metadata to match columns exactly
   mb <- mb[match(colnames(X), mb$SampleID), ]
 
+  # FIXED: Convert to integers (ALDEx2 requirement)
+  # PICRUSt2 outputs floating-point abundances, but ALDEx2 needs integers
+  # Scale by 1000 and round to preserve precision while converting to integers
+  X <- round(X * 1000)
+  storage.mode(X) <- "integer"
+  
   # FIXED: Condition as CHARACTER VECTOR (not factor)
   # ALDEx2 expects character vector, not factor
   cond <- as.character(mb$Group)
