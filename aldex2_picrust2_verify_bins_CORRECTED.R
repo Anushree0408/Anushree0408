@@ -160,12 +160,13 @@ run_bin <- function(bin_name){
   rownames(res) <- NULL
 
   # Attach pathway names + direction
+  # FIXED: Use diff.btw instead of effect (ALDEx2 column name)
   res <- res %>%
     dplyr::left_join(map_lookup, by = "path_id") %>%
-    dplyr::mutate(higher_in = ifelse(effect > 0, "IBD", "CONTROL"))
+    dplyr::mutate(higher_in = ifelse(diff.btw > 0, "IBD", "CONTROL"))
 
   if ("we.eBH" %in% names(res)) {
-    res <- dplyr::arrange(res, we.eBH, dplyr::desc(effect))
+    res <- dplyr::arrange(res, we.eBH, dplyr::desc(abs(diff.btw)))
   }
 
   tag <- gsub("-", "", bin_name)
