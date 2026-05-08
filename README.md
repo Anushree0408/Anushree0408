@@ -1,15 +1,14 @@
 ## Anushree Joshi
-Computational Biology graduate student working on microbiome (16S, PICRUSt2) and host transcriptomics with applied machine learning for biomarker discovery.
+Skilled in applying computational approaches to biological data analysis, with working knowledge of Python/R, Linux/Unix command-line tools, bioinformatics pipelines, and statistical analysis. Experienced in translating complex biological datasets into structured, actionable research insights and presenting findings clearly. Interested in contributing to genomics, computational biology, and data-intensive research involving health and disease.
 
 ### Core skills
-- Microbiome bioinformatics: QIIME2, taxonomy/feature-table workflows, diversity analysis
+- Python | R | Linux/Unix | pandas | NumPy | scikit-learn | matplotlib | seaborn | QIIME2 | Seurat | Scanpy | Bioconductor | DESeq2 | edgeR
 - Functional profiling: PICRUSt2 (pathways, contribution analysis, visualization)
-- RNA-seq: QC → alignment/quantification → downstream interpretation
+- Genomic | Transcriptomic 
 - Machine learning: Random Forest, XGBoost, SVM, Logistic Regression, nested CV, ROC/PR, SHAP
-- Programming & tools: Python, R, Bash, Linux, Conda, Nextflow
 
 ### Interests
-Host–microbiome interactions • Pediatric gut microbiome • Reproducible bioinformatics pipelines
+Motivated to contribute interdisciplinary research and analytical skills to health-focused program support, nutrition, evidence generation, monitoring, and data-driven NGO health programs. I am especially interested in working at the intersection of science and social welfare to contribute meaningfully to address real time challenges.
 
 📍 Daegu, South Korea  
 📧 sjoshi218@gmail.com  
